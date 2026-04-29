@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FarmaLink — Conectando Pacientes a Farmácias</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              blue:      '#1e3a8a',
+              blueMid:   '#1d4ed8',
+              blueLight: '#3b82f6',
+              green:     '#10b981',
+              greenDark: '#059669',
+              navy:      '#0f2557',
+            }
+          },
+          fontFamily: {
+            display: ['"DM Serif Display"', 'Georgia', 'serif'],
+            body:    ['"DM Sans"', 'sans-serif'],
+            mono:    ['"JetBrains Mono"', 'monospace'],
+          },
+          animation: {
+            'slide-in':   'slideIn 0.35s cubic-bezier(0.34,1.56,0.64,1) both',
+            'fade-out':   'fadeOut 0.4s ease forwards',
+            'pulse-soft': 'pulseSoft 2s ease-in-out infinite',
+            'fade-in':    'fadeIn 0.4s ease both',
+          },
+          keyframes: {
+            slideIn:   { from:{ transform:'translateX(110%)', opacity:'0' }, to:{ transform:'translateX(0)', opacity:'1' } },
+            fadeOut:   { to:{ opacity:'0', transform:'translateY(-8px)' } },
+            fadeIn:    { from:{ opacity:'0', transform:'translateY(12px)' }, to:{ opacity:'1', transform:'translateY(0)' } },
+            pulseSoft: { '0%,100%':{ opacity:'1' }, '50%':{ opacity:'.55' } },
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'DM Sans', sans-serif; background: #f0f4ff; }
+    .nav-btn { transition: all .2s ease; }
+    .nav-btn.active { background: #10b981; color: #fff; }
+    .nav-btn:not(.active):hover { background: rgba(255,255,255,.15); }
+    .card-hover { transition: transform .2s ease, box-shadow .2s ease; }
+    .card-hover:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(30,58,138,.13); }
+    .input-focus { transition: border-color .2s, box-shadow .2s; }
+    .input-focus:focus { outline: none; border-color: #1d4ed8; box-shadow: 0 0 0 3px rgba(29,78,216,.15); }
+    .btn-primary { transition: background .2s, transform .1s, box-shadow .2s; }
+    .btn-primary:hover { background: #1d4ed8; box-shadow: 0 4px 14px rgba(30,58,138,.35); }
+    .btn-primary:active { transform: scale(.97); }
+    .btn-green { transition: background .2s, transform .1s; }
+    .btn-green:hover { background: #059669; }
+    .btn-green:active { transform: scale(.97); }
+    .view-section { display: none; }
+    .view-section.active { display: block; animation: fadeIn .4s ease both; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(12px) } to { opacity:1; transform:translateY(0) } }
+    .toast-container { position: fixed; top: 1.25rem; right: 1.25rem; z-index: 9999; display: flex; flex-direction: column; gap: .6rem; pointer-events: none; }
+    .toast { pointer-events: auto; animation: slideIn .35s cubic-bezier(.34,1.56,.64,1) both; }
+    .toast.removing { animation: fadeOut .4s ease forwards; }
+    .hero-bg { background: linear-gradient(135deg, #0f2557 0%, #1e3a8a 50%, #1d4ed8 100%); }
+    .stat-gradient { background: linear-gradient(135deg, #10b981, #059669); }
+    .badge-avail { animation: pulseSoft 2s ease-in-out infinite; }
+    @keyframes pulseSoft { 0%,100%{opacity:1} 50%{opacity:.6} }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #e0e7ff; }
+    ::-webkit-scrollbar-thumb { background: #93c5fd; border-radius: 3px; }
+    .table-row-hover:hover { background: #eff6ff; }
+    .pill { display: inline-flex; align-items: center; gap: .3rem; padding: .2rem .65rem; border-radius: 999px; font-size: .7rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+    .auth-tab { transition: all .2s; border-bottom: 2px solid transparent; }
+    .auth-tab.active { border-color: #1d4ed8; color: #1e3a8a; font-weight: 600; }
+    .auth-tab:not(.active) { color: #94a3b8; }
+    .spinner { width: 16px; height: 16px; border: 2.5px solid rgba(255,255,255,.35); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; vertical-align: middle; margin-right: 6px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .strength-bar { height: 4px; border-radius: 2px; transition: background .3s; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- TOAST CONTAINER -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- HEADER -->
+  <header class="hero-bg shadow-lg sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div class="flex items-center gap-2.5 cursor-pointer" onclick="showView('patient')">
+        <div class="bg-brand-green rounded-lg p-1.5">
+          <i data-lucide="activity" class="w-5 h-5 text-white"></i>
+        </div>
+        <span class="font-display text-2xl text-white tracking-tight">Farma<span class="text-brand-green">Link</span></span>
+      </div>
+      <nav class="flex gap-2 flex-wrap">
+        <button id="nav-patient" onclick="showView('patient')" class="nav-btn active text-white text-sm font-medium px-4 py-2 rounded-lg flex items-center gap-1.5">
+          <i data-lucide="search" class="w-4 h-4"></i> Painel do Paciente
+        </button>
+        <button id="nav-company" onclick="showView('company')" class="nav-btn text-white text-sm font-medium px-4 py-2 rounded-lg flex items-center gap-1.5">
+          <i data-lucide="building-2" class="w-4 h-4"></i> Acesso Empresa
+        </button>
+        <button id="nav-about" onclick="showView('about')" class="nav-btn text-white text-sm font-medium px-4 py-2 rounded-lg flex items-center gap-1.5">
+          <i data-lucide="info" class="w-4 h-4"></i> Sobre o Projeto
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-6xl mx-auto w-full px-4 py-8">
+
+    <!-- ── VIEW: PACIENTE ── -->
+    <section id="view-patient" class="view-section active">
+      <div class="hero-bg rounded-2xl p-8 mb-8 text-center relative overflow-hidden">
+        <div class="absolute inset-0 opacity-10" style="background:radial-gradient(circle at 20% 50%,#10b981 0%,transparent 50%),radial-gradient(circle at 80% 20%,#3b82f6 0%,transparent 40%)"></div>
+        <div class="relative z-10">
+          <span class="pill bg-brand-green/20 text-brand-green border border-brand-green/30 mb-3 inline-flex">
+            <i data-lucide="zap" class="w-3 h-3"></i> Disponibilidade em Tempo Real
+          </span>
+          <h1 class="font-display text-3xl sm:text-4xl text-white mb-2">Encontre seu medicamento <span class="italic text-brand-green">agora mesmo</span></h1>
+          <p class="text-blue-200 text-sm sm:text-base max-w-xl mx-auto">Conectamos você às farmácias com estoque disponível na sua região. Sem deslocamentos desnecessários.</p>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl shadow-sm border border-blue-100 p-6 mb-8">
+        <div class="flex flex-col sm:flex-row gap-3 mb-4">
+          <div class="relative flex-1">
+            <i data-lucide="map-pin" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-blue"></i>
+            <input id="cepInput" type="text" placeholder="Digite seu CEP (ex: 01310-100)"
+              class="input-focus w-full pl-9 pr-4 py-2.5 border border-blue-200 rounded-lg text-sm text-gray-700 bg-blue-50/50" maxlength="9" />
+          </div>
+          <button onclick="buscarLojas()" class="btn-primary bg-brand-blue text-white px-5 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 justify-center whitespace-nowrap">
+            <i data-lucide="navigation" class="w-4 h-4"></i> Buscar Lojas Próximas
+          </button>
+        </div>
+        <div class="relative">
+          <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-brand-blueLight"></i>
+          <input id="searchInput" type="text" placeholder="Buscar medicamento pelo nome..."
+            oninput="filterMeds()"
+            class="input-focus w-full pl-10 pr-4 py-3 border-2 border-blue-200 rounded-xl text-base text-gray-800 bg-white font-medium" />
+        </div>
+        <div id="lojasBadge" class="hidden mt-3 flex items-center gap-2 text-sm text-brand-green font-medium">
+          <i data-lucide="check-circle" class="w-4 h-4"></i>
+          <span id="lojasText"></span>
+        </div>
+      </div>
+
+      <div id="medsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+      <div id="emptyState" class="hidden text-center py-16">
+        <i data-lucide="package-x" class="w-12 h-12 text-blue-200 mx-auto mb-3"></i>
+        <p class="text-gray-400 font-medium">Nenhum medicamento encontrado.</p>
+      </div>
+    </section>
+
+    <!-- ── VIEW: EMPRESA ── -->
+    <section id="view-company" class="view-section">
+
+      <!-- AUTH PANEL -->
+      <div id="authPanel">
+        <div class="max-w-md mx-auto mt-6">
+
+          <!-- Topo azul -->
+          <div class="hero-bg p-7 text-center relative overflow-hidden" style="border-radius:1rem 1rem 0 0">
+            <div class="absolute inset-0 opacity-10" style="background:radial-gradient(circle at 80% 20%,#10b981 0%,transparent 50%)"></div>
+            <div class="relative z-10">
+              <div class="bg-white/10 w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                <i data-lucide="shield-check" class="w-7 h-7 text-brand-green"></i>
+              </div>
+              <h2 class="font-display text-2xl text-white mb-1">Acesso Empresarial</h2>
+              <p class="text-blue-200 text-sm">Portal exclusivo para gestão de estoque</p>
+            </div>
+          </div>
+
+          <!-- Tabs -->
+          <div class="bg-white border-x border-blue-100 flex">
+            <button id="tabLogin" onclick="switchAuthTab('login')" class="auth-tab active flex-1 py-3.5 text-sm text-center">Entrar</button>
+            <button id="tabCadastro" onclick="switchAuthTab('cadastro')" class="auth-tab flex-1 py-3.5 text-sm text-center">Cadastrar Empresa</button>
+          </div>
+
+          <!-- FORM LOGIN -->
+          <div id="formLogin" class="bg-white rounded-b-2xl border border-blue-100 border-t-0 p-7 shadow-sm">
+            <div class="mb-4">
+              <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">CNPJ</label>
+              <div class="relative">
+                <i data-lucide="hash" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></i>
+                <input id="loginCnpj" type="text" placeholder="00.000.000/0001-00" maxlength="18"
+                  class="input-focus w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm font-mono" />
+              </div>
+            </div>
+            <div class="mb-6">
+              <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Senha</label>
+              <div class="relative">
+                <i data-lucide="lock" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></i>
+                <input id="loginSenha" type="password" placeholder="••••••••"
+                  class="input-focus w-full pl-9 pr-10 py-2.5 border border-gray-200 rounded-lg text-sm" />
+                <button type="button" onclick="togglePass('loginSenha',this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition">
+                  <i data-lucide="eye" class="w-4 h-4"></i>
+                </button>
+              </div>
+            </div>
+            <button id="btnLogin" onclick="doLogin()"
+              class="btn-primary bg-brand-blue w-full py-3 text-white font-semibold rounded-xl flex items-center justify-center gap-2">
+              <i data-lucide="log-in" class="w-4 h-4"></i> <span id="btnLoginText">Entrar no Painel</span>
+            </button>
+            <p class="text-center text-xs text-gray-400 mt-4">
+              Não tem conta? <button onclick="switchAuthTab('cadastro')" class="text-brand-blue font-semibold hover:underline">Cadastre sua farmácia</button>
+            </p>
+          </div>
+
+          <!-- FORM CADASTRO -->
+          <div id="formCadastro" class="hidden bg-white rounded-b-2xl border border-blue-100 border-t-0 p-7 shadow-sm">
+            <div class="mb-4">
+              <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Nome da Farmácia / Empresa</label>
+              <div class="relative">
+                <i data-lucide="store" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></i>
+                <input id="cadNome" type="text" placeholder="Ex: Farmácia Bem-Estar LTDA"
+                  class="input-focus w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm" />
+              </div>
+            </div>
+            <div class="mb-4">
+              <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">CNPJ</label>
+              <div class="relative">
+                <i data-lucide="hash" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></i>
+                <input id="cadCnpj" type="text" placeholder="00.000.000/0001-00" maxlength="18"
+                  class="input-focus w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm font-mono" />
+              </div>
+            </div>
+            <div class="mb-2">
+              <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Senha de Acesso</label>
+              <div class="relative">
+                <i data-lucide="lock" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></i>
+                <input id="cadSenha" type="password" placeholder="Mínimo 6 caracteres" oninput="updateStrength(this.value)"
+                  class="input-focus w-full pl-9 pr-10 py-2.5 border border-gray-200 rounded-lg text-sm" />
+                <button type="button" onclick="togglePass('cadSenha',this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition">
+                  <i data-lucide="eye" class="w-4 h-4"></i>
+                </button>
+              </div>
+            </div>
+            <!-- Barra de força -->
+            <div class="flex gap-1 mb-1">
+              <div id="sb1" class="strength-bar flex-1 bg-gray-200"></div>
+              <div id="sb2" class="strength-bar flex-1 bg-gray-200"></div>
+              <div id="sb3" class="strength-bar flex-1 bg-gray-200"></div>
+            </div>
+            <p id="strengthLabel" class="text-xs text-gray-400 mb-5">Digite uma senha segura</p>
+
+            <button id="btnCadastrar" onclick="doCadastro()"
+              class="btn-green bg-brand-green w-full py-3 text-white font-semibold rounded-xl flex items-center justify-center gap-2">
+              <i data-lucide="user-plus" class="w-4 h-4"></i> <span id="btnCadText">Criar Conta</span>
+            </button>
+            <p class="text-center text-xs text-gray-400 mt-4">
+              Já tem conta? <button onclick="switchAuthTab('login')" class="text-brand-blue font-semibold hover:underline">Fazer login</button>
+            </p>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- DASHBOARD -->
+      <div id="dashboardPanel" class="hidden">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-7">
+          <div>
+            <h2 class="font-display text-2xl text-brand-blue">Painel de Gestão</h2>
+            <p class="text-gray-500 text-sm">
+              <span id="dashNomeEmpresa" class="font-semibold text-brand-blue"></span>
+              &nbsp;·&nbsp; CNPJ: <span id="dashCnpj" class="font-mono text-xs text-gray-500"></span>
+            </p>
+          </div>
+          <button onclick="doLogout()" class="text-sm text-gray-500 hover:text-red-500 transition flex items-center gap-1.5 border border-gray-200 px-4 py-2 rounded-lg">
+            <i data-lucide="log-out" class="w-4 h-4"></i> Sair
+          </button>
+        </div>
+
+        <!-- KPIs -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+          <div class="stat-gradient rounded-2xl p-5 text-white shadow">
+            <div class="flex items-center gap-2 mb-2 opacity-80">
+              <i data-lucide="trending-up" class="w-4 h-4"></i>
+              <span class="text-xs font-semibold uppercase tracking-wide">Taxa de Disponibilidade</span>
+            </div>
+            <div class="text-4xl font-display font-bold">94%</div>
+            <div class="text-xs text-emerald-100 mt-1">↑ 3% vs. semana anterior</div>
+          </div>
+          <div class="bg-brand-blue rounded-2xl p-5 text-white shadow">
+            <div class="flex items-center gap-2 mb-2 opacity-80">
+              <i data-lucide="shield-check" class="w-4 h-4"></i>
+              <span class="text-xs font-semibold uppercase tracking-wide">Vendas Salvas da Ruptura</span>
+            </div>
+            <div class="text-4xl font-display font-bold">12</div>
+            <div class="text-xs text-blue-200 mt-1">Hoje — em tempo real</div>
+          </div>
+          <div class="bg-white rounded-2xl p-5 border border-blue-100 shadow-sm">
+            <div class="flex items-center gap-2 mb-2 text-gray-400">
+              <i data-lucide="package" class="w-4 h-4"></i>
+              <span class="text-xs font-semibold uppercase tracking-wide">Itens no Estoque</span>
+            </div>
+            <div id="kpiTotal" class="text-4xl font-display font-bold text-brand-blue">0</div>
+            <div class="text-xs text-gray-400 mt-1">Produtos cadastrados</div>
+          </div>
+        </div>
+
+        <!-- Formulário de Produto -->
+        <div class="bg-white rounded-2xl shadow-sm border border-blue-100 p-6 mb-6">
+          <h3 class="font-semibold text-brand-blue text-lg mb-5 flex items-center gap-2">
+            <i data-lucide="plus-circle" class="w-5 h-5 text-brand-green"></i>
+            <span id="formTitle">Cadastrar Produto no Estoque</span>
+          </h3>
+          <input type="hidden" id="editingId" value="" />
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Nome do Fármaco</label>
+              <input id="fNome" type="text" placeholder="Ex: Losartana 50mg"
+                class="input-focus w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Categoria</label>
+              <select id="fCategoria" class="input-focus w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white">
+                <option value="">Selecione...</option>
+                <option>Uso Contínuo</option>
+                <option>Antibiótico</option>
+                <option>Anti-inflamatório</option>
+                <option>Analgésico</option>
+                <option>Vitaminas & Suplementos</option>
+                <option>Dermatológico</option>
+                <option>Genérico</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Qtd. em Estoque</label>
+              <input id="fQtd" type="number" min="0" placeholder="Ex: 150"
+                class="input-focus w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Preço (R$)</label>
+              <input id="fPreco" type="number" step="0.01" min="0" placeholder="Ex: 29.90"
+                class="input-focus w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm" />
+            </div>
+          </div>
+          <div class="flex gap-3 mt-5">
+            <button onclick="salvarProduto()" class="btn-green bg-brand-green text-white px-6 py-2.5 rounded-xl font-semibold text-sm flex items-center gap-2">
+              <i data-lucide="save" class="w-4 h-4"></i> <span id="btnSalvarText">Cadastrar Produto</span>
+            </button>
+            <button id="btnCancelarEdit" onclick="cancelarEdicao()" class="hidden text-sm text-gray-500 border border-gray-200 px-4 py-2.5 rounded-xl hover:bg-gray-50 transition flex items-center gap-1.5">
+              <i data-lucide="x" class="w-4 h-4"></i> Cancelar
+            </button>
+          </div>
+        </div>
+
+        <!-- Tabela -->
+        <div class="bg-white rounded-2xl shadow-sm border border-blue-100 overflow-hidden">
+          <div class="px-6 py-4 border-b border-blue-50 flex items-center justify-between">
+            <h3 class="font-semibold text-brand-blue flex items-center gap-2">
+              <i data-lucide="table-2" class="w-4 h-4 text-brand-green"></i> Controle de Inventário
+            </h3>
+            <span id="tableCount" class="pill bg-blue-50 text-brand-blue border border-blue-100">0 itens</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="bg-blue-50/70 text-gray-500 text-xs uppercase tracking-wide">
+                  <th class="px-5 py-3 text-left font-semibold">Fármaco</th>
+                  <th class="px-5 py-3 text-left font-semibold">Categoria</th>
+                  <th class="px-5 py-3 text-center font-semibold">Estoque</th>
+                  <th class="px-5 py-3 text-right font-semibold">Preço</th>
+                  <th class="px-5 py-3 text-center font-semibold">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="inventoryTable">
+                <tr><td colspan="5" class="text-center py-12 text-gray-300">
+                  <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2"></i>
+                  <p>Nenhum produto cadastrado ainda.</p>
+                </td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ── VIEW: SOBRE ── -->
+    <section id="view-about" class="view-section">
+      <div class="max-w-3xl mx-auto">
+        <div class="hero-bg rounded-2xl p-8 mb-8 text-center relative overflow-hidden">
+          <div class="absolute inset-0 opacity-10" style="background:radial-gradient(circle at 80% 80%,#10b981 0%,transparent 50%)"></div>
+          <div class="relative z-10">
+            <div class="bg-brand-green/20 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <i data-lucide="heart-pulse" class="w-8 h-8 text-brand-green"></i>
+            </div>
+            <h2 class="font-display text-3xl text-white mb-2">Nossa <span class="italic text-brand-green">Missão</span></h2>
+            <p class="text-blue-200">Tecnologia a serviço da saúde e do comércio farmacêutico brasileiro.</p>
+          </div>
+        </div>
+        <div class="grid gap-5">
+          <div class="bg-white rounded-2xl border border-blue-100 p-6 card-hover shadow-sm">
+            <div class="flex items-start gap-4">
+              <div class="bg-red-50 rounded-xl p-2.5 shrink-0"><i data-lucide="alert-triangle" class="w-5 h-5 text-red-500"></i></div>
+              <div>
+                <h3 class="font-semibold text-gray-800 text-base mb-2">O Problema: Ruptura de Estoque</h3>
+                <p class="text-gray-600 text-sm leading-relaxed">Milhares de brasileiros chegam a uma farmácia e ouvem "não temos em estoque". Para pacientes de uso contínuo, isso pode ser uma emergência de saúde. A <strong>ruptura de estoque</strong> custa bilhões ao varejo e empurra farmácias independentes à falência.</p>
+              </div>
+            </div>
+          </div>
+          <div class="bg-white rounded-2xl border border-blue-100 p-6 card-hover shadow-sm">
+            <div class="flex items-start gap-4">
+              <div class="bg-blue-50 rounded-xl p-2.5 shrink-0"><i data-lucide="link" class="w-5 h-5 text-brand-blue"></i></div>
+              <div>
+                <h3 class="font-semibold text-gray-800 text-base mb-2">A Solução: Integração de Estoques</h3>
+                <p class="text-gray-600 text-sm leading-relaxed">O <strong>FarmaLink</strong> integra estoques físicos e digitais de farmácias grandes e independentes numa única plataforma. O paciente pesquisa, encontra disponibilidade em tempo real e reserva com um clique.</p>
+              </div>
+            </div>
+          </div>
+          <div class="bg-white rounded-2xl border border-blue-100 p-6 card-hover shadow-sm">
+            <div class="flex items-start gap-4">
+              <div class="bg-emerald-50 rounded-xl p-2.5 shrink-0"><i data-lucide="store" class="w-5 h-5 text-brand-green"></i></div>
+              <div>
+                <h3 class="font-semibold text-gray-800 text-base mb-2">Sobrevivência das Farmácias Independentes</h3>
+                <p class="text-gray-600 text-sm leading-relaxed">Com <strong>87,4% de taxa de mortalidade</strong>, farmácias independentes precisam de ferramentas digitais para competir. O FarmaLink democratiza o acesso à tecnologia, permitindo que pequenas farmácias apareçam ao lado das grandes redes.</p>
+              </div>
+            </div>
+          </div>
+          <div class="bg-gradient-to-br from-brand-blue to-brand-blueMid rounded-2xl p-6 text-white">
+            <h3 class="font-display text-xl mb-3 flex items-center gap-2">
+              <i data-lucide="target" class="w-5 h-5 text-brand-green"></i> Nossos Pilares
+            </h3>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div class="bg-white/10 rounded-xl p-4 text-center">
+                <i data-lucide="eye" class="w-6 h-6 text-brand-green mx-auto mb-2"></i>
+                <div class="font-semibold text-sm">Visibilidade</div>
+                <div class="text-xs text-blue-200 mt-1">Estoque em tempo real para o paciente</div>
+              </div>
+              <div class="bg-white/10 rounded-xl p-4 text-center">
+                <i data-lucide="zap" class="w-6 h-6 text-brand-green mx-auto mb-2"></i>
+                <div class="font-semibold text-sm">Agilidade</div>
+                <div class="text-xs text-blue-200 mt-1">Reserva em segundos, sem ligação</div>
+              </div>
+              <div class="bg-white/10 rounded-xl p-4 text-center">
+                <i data-lucide="users" class="w-6 h-6 text-brand-green mx-auto mb-2"></i>
+                <div class="font-semibold text-sm">Equidade</div>
+                <div class="text-xs text-blue-200 mt-1">Redes e independentes lado a lado</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="mt-12 border-t border-blue-100 bg-white">
+    <div class="max-w-6xl mx-auto px-4 py-6">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div class="flex items-center gap-2 text-brand-blue">
+          <i data-lucide="activity" class="w-4 h-4 text-brand-green"></i>
+          <span class="font-display text-lg">Farma<span class="text-brand-green">Link</span></span>
+          <span class="text-gray-300 mx-1">·</span>
+          <span class="text-xs text-gray-400">Tecnologia para o Varejo Farmacêutico</span>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-3">
+          <div class="flex items-center gap-2 bg-blue-50 border border-blue-100 rounded-xl px-4 py-2">
+            <i data-lucide="trending-up" class="w-4 h-4 text-brand-blueLight shrink-0"></i>
+            <span class="text-xs text-gray-600"><strong class="text-brand-blue">Varejo Digital 2025:</strong> Movimentou <strong>R$ 246,1 Bilhões</strong></span>
+          </div>
+          <div class="flex items-center gap-2 bg-red-50 border border-red-100 rounded-xl px-4 py-2">
+            <i data-lucide="alert-circle" class="w-4 h-4 text-red-500 shrink-0 badge-avail"></i>
+            <span class="text-xs text-gray-600"><strong class="text-red-500">Alerta:</strong> Taxa de mortalidade de farmácias independentes atinge <strong class="text-red-600">87,4%</strong></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+  // ══════════════════════════════════════════
+  //  SUPABASE CONFIG
+  //  ⚠️  Após gerar nova chave no Supabase,
+  //  substitua SUPABASE_ANON abaixo.
+  // ══════════════════════════════════════════
+  const SUPABASE_URL  = 'https://ycmztazymmlmlzatooqt.supabase.co';
+  const SUPABASE_ANON = 'sb_publishable_nI1lIDEUJkusIHacXIrX8g_Ajo-8haS';
+  const SB_H = {
+    'Content-Type': 'application/json',
+    'apikey': SUPABASE_ANON,
+    'Authorization': 'Bearer ' + SUPABASE_ANON
+  };
+
+  // ── REST helpers ────────────────────────────────────────────────
+  async function sbGet(table, qs = '') {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${qs}`, { headers: SB_H });
+    if (!r.ok) { const t = await r.text(); throw new Error(t); }
+    return r.json();
+  }
+  async function sbPost(table, body) {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+      method: 'POST',
+      headers: { ...SB_H, 'Prefer': 'return=representation' },
+      body: JSON.stringify(body)
+    });
+    if (!r.ok) { const t = await r.text(); throw new Error(t); }
+    return r.json();
+  }
+
+  // ── localStorage meds ───────────────────────────────────────────
+  const STORAGE_KEY = 'farmalink_meds';
+  const FARMACIAS = [
+    { nome: 'Drogaria São Paulo',   tipo: 'Rede' },
+    { nome: 'Farmácia Popular',     tipo: 'Rede' },
+    { nome: 'Farmácia Bem-Estar',   tipo: 'Independente' },
+    { nome: 'Drogaria Saúde Total', tipo: 'Independente' },
+    { nome: 'FarmaVida',            tipo: 'Independente' },
+  ];
+  function getMeds() { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+  function saveMeds(d) { localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); }
+  function uid() { return 'FL-' + Math.random().toString(36).substr(2,9).toUpperCase(); }
+
+  // ── Sessão ──────────────────────────────────────────────────────
+  let SESSAO = null; // { id, nome, cnpj }
+
+  // ── Init ────────────────────────────────────────────────────────
+  function init() {
+    if (!localStorage.getItem(STORAGE_KEY)) {
+      saveMeds([
+        { id: uid(), nome: 'Losartana Potássica 50mg', categoria: 'Uso Contínuo', qtd: 240, preco: 18.90, farmacia: FARMACIAS[0] },
+        { id: uid(), nome: 'Atorvastatina 20mg',       categoria: 'Uso Contínuo', qtd: 180, preco: 24.50, farmacia: FARMACIAS[2] },
+        { id: uid(), nome: 'Amoxicilina 500mg',         categoria: 'Antibiótico',  qtd: 96,  preco: 32.00, farmacia: FARMACIAS[1] },
+      ]);
+    }
+    renderMeds();
+    // Restaurar sessão
+    const saved = sessionStorage.getItem('fl_sessao');
+    if (saved) { SESSAO = JSON.parse(saved); abrirDashboard(); }
+    lucide.createIcons();
+  }
+
+  // ── SPA ─────────────────────────────────────────────────────────
+  function showView(id) {
+    document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('view-' + id).classList.add('active');
+    document.getElementById('nav-' + id).classList.add('active');
+    lucide.createIcons();
+  }
+
+  // ── Toast ───────────────────────────────────────────────────────
+  function showToast(msg, type = 'success') {
+    const c = document.getElementById('toastContainer');
+    const colors = { success:'bg-brand-green text-white', error:'bg-red-500 text-white', info:'bg-brand-blue text-white' };
+    const icons  = { success:'check-circle', error:'x-circle', info:'info' };
+    const el = document.createElement('div');
+    el.className = `toast ${colors[type]} rounded-xl px-5 py-3 shadow-xl flex items-center gap-3 text-sm font-medium max-w-xs`;
+    el.innerHTML = `<i data-lucide="${icons[type]}" class="w-4 h-4 shrink-0"></i><span>${msg}</span>`;
+    c.appendChild(el);
+    lucide.createIcons();
+    setTimeout(() => { el.classList.add('removing'); setTimeout(() => el.remove(), 400); }, 3200);
+  }
+
+  // ── Auth: tabs ──────────────────────────────────────────────────
+  function switchAuthTab(tab) {
+    const isLogin = tab === 'login';
+    document.getElementById('tabLogin').classList.toggle('active', isLogin);
+    document.getElementById('tabCadastro').classList.toggle('active', !isLogin);
+    document.getElementById('formLogin').classList.toggle('hidden', !isLogin);
+    document.getElementById('formCadastro').classList.toggle('hidden', isLogin);
+    lucide.createIcons();
+  }
+
+  function togglePass(inputId, btn) {
+    const inp = document.getElementById(inputId);
+    const show = inp.type === 'password';
+    inp.type = show ? 'text' : 'password';
+    btn.innerHTML = show
+      ? '<i data-lucide="eye-off" class="w-4 h-4"></i>'
+      : '<i data-lucide="eye" class="w-4 h-4"></i>';
+    lucide.createIcons();
+  }
+
+  function updateStrength(val) {
+    let s = 0;
+    if (val.length >= 6) s++;
+    if (/[A-Z]/.test(val) || /\d/.test(val)) s++;
+    if (val.length >= 10 && /[^A-Za-z0-9]/.test(val)) s++;
+    const cols = ['bg-red-400','bg-amber-400','bg-brand-green'];
+    const labs = ['Senha fraca','Senha razoável','Senha forte 💪'];
+    for (let i = 1; i <= 3; i++) {
+      document.getElementById('sb'+i).className = 'strength-bar flex-1 ' + (i <= s ? cols[s-1] : 'bg-gray-200');
+    }
+    document.getElementById('strengthLabel').textContent = s > 0 ? labs[s-1] : 'Digite uma senha segura';
+  }
+
+  function maskCnpj(v) {
+    v = v.replace(/\D/g,'').slice(0,14);
+    if (v.length > 12) v = v.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{0,2})$/,'$1.$2.$3/$4-$5');
+    else if (v.length > 8) v = v.replace(/^(\d{2})(\d{3})(\d{3})(\d{0,4})$/,'$1.$2.$3/$4');
+    else if (v.length > 5) v = v.replace(/^(\d{2})(\d{3})(\d{0,3})$/,'$1.$2.$3');
+    else if (v.length > 2) v = v.replace(/^(\d{2})(\d{0,3})$/,'$1.$2');
+    return v;
+  }
+
+  // ── btn loading helper ──────────────────────────────────────────
+  function setLoading(btnId, txtId, loading, label) {
+    const btn = document.getElementById(btnId);
+    const txt = document.getElementById(txtId);
+    btn.disabled = loading;
+    btn.style.opacity = loading ? '.7' : '1';
+    txt.textContent = label;
+    const old = btn.querySelector('.spinner');
+    if (old) old.remove();
+    if (loading) {
+      const sp = document.createElement('span');
+      sp.className = 'spinner';
+      btn.prepend(sp);
+    }
+  }
+
+  // ── CADASTRO → Supabase ─────────────────────────────────────────
+  async function doCadastro() {
+    const nome  = document.getElementById('cadNome').value.trim();
+    const cnpj  = document.getElementById('cadCnpj').value.trim();
+    const senha = document.getElementById('cadSenha').value;
+    if (!nome || !cnpj || !senha) { showToast('Preencha todos os campos.', 'error'); return; }
+    if (senha.length < 6)          { showToast('Senha deve ter ao menos 6 caracteres.', 'error'); return; }
+
+    setLoading('btnCadastrar', 'btnCadText', true, 'Criando conta...');
+    try {
+      // Verifica duplicidade
+      const existe = await sbGet('empresas', `cnpj=eq.${encodeURIComponent(cnpj)}&select=id`);
+      if (existe.length > 0) { showToast('CNPJ já cadastrado. Faça login.', 'error'); return; }
+
+      await sbPost('empresas', { nome, cnpj, senha });
+      showToast(`Empresa cadastrada! Bem-vinda, ${nome}!`, 'success');
+      document.getElementById('cadNome').value = '';
+      document.getElementById('cadCnpj').value = '';
+      document.getElementById('cadSenha').value = '';
+      updateStrength('');
+      switchAuthTab('login');
+      document.getElementById('loginCnpj').value = cnpj;
+    } catch (err) {
+      console.error(err);
+      showToast('Erro ao cadastrar. Verifique o console.', 'error');
+    } finally {
+      setLoading('btnCadastrar', 'btnCadText', false, 'Criar Conta');
+    }
+  }
+
+  // ── LOGIN → Supabase ────────────────────────────────────────────
+  async function doLogin() {
+    const cnpj  = document.getElementById('loginCnpj').value.trim();
+    const senha = document.getElementById('loginSenha').value;
+    if (!cnpj || !senha) { showToast('Preencha CNPJ e Senha.', 'error'); return; }
+
+    setLoading('btnLogin', 'btnLoginText', true, 'Verificando...');
+    try {
+      const rows = await sbGet('empresas',
+        `cnpj=eq.${encodeURIComponent(cnpj)}&senha=eq.${encodeURIComponent(senha)}&select=id,nome,cnpj`
+      );
+      if (rows.length === 0) { showToast('CNPJ ou senha incorretos.', 'error'); return; }
+      SESSAO = rows[0];
+      sessionStorage.setItem('fl_sessao', JSON.stringify(SESSAO));
+      abrirDashboard();
+      showToast(`Bem-vinda, ${SESSAO.nome}! 👋`, 'success');
+    } catch (err) {
+      console.error(err);
+      showToast('Erro de conexão. Tente novamente.', 'error');
+    } finally {
+      setLoading('btnLogin', 'btnLoginText', false, 'Entrar no Painel');
+    }
+  }
+
+  function doLogout() {
+    SESSAO = null;
+    sessionStorage.removeItem('fl_sessao');
+    document.getElementById('authPanel').classList.remove('hidden');
+    document.getElementById('dashboardPanel').classList.add('hidden');
+    document.getElementById('loginCnpj').value = '';
+    document.getElementById('loginSenha').value = '';
+    showToast('Sessão encerrada.', 'info');
+    lucide.createIcons();
+  }
+
+  function abrirDashboard() {
+    document.getElementById('authPanel').classList.add('hidden');
+    document.getElementById('dashboardPanel').classList.remove('hidden');
+    document.getElementById('dashNomeEmpresa').textContent = SESSAO.nome;
+    document.getElementById('dashCnpj').textContent = SESSAO.cnpj;
+    renderInventory();
+    lucide.createIcons();
+  }
+
+  // ── Paciente ────────────────────────────────────────────────────
+  function filterMeds() { renderMeds(document.getElementById('searchInput').value.toLowerCase().trim()); }
+
+  function buscarLojas() {
+    const cep = document.getElementById('cepInput').value.trim();
+    if (!cep) { showToast('Informe um CEP.', 'error'); return; }
+    const qtd = Math.floor(Math.random() * 8) + 3;
+    document.getElementById('lojasBadge').classList.remove('hidden');
+    document.getElementById('lojasText').textContent = `${qtd} farmácias encontradas num raio de 5km para o CEP ${cep}`;
+    showToast(`${qtd} farmácias disponíveis próximas!`, 'info');
+    lucide.createIcons();
+  }
+
+  function renderMeds(query = '') {
+    const meds  = getMeds().filter(m => !query || m.nome.toLowerCase().includes(query));
+    const grid  = document.getElementById('medsGrid');
+    const empty = document.getElementById('emptyState');
+    grid.innerHTML = '';
+    if (!meds.length) { empty.classList.remove('hidden'); return; }
+    empty.classList.add('hidden');
+    meds.forEach((m, i) => {
+      const f  = m.farmacia || FARMACIAS[i % FARMACIAS.length];
+      const tc = f.tipo === 'Rede' ? 'bg-blue-100 text-brand-blue' : 'bg-purple-100 text-purple-700';
+      const card = document.createElement('div');
+      card.className = 'bg-white rounded-2xl border border-blue-100 p-5 card-hover shadow-sm flex flex-col gap-3';
+      card.innerHTML = `
+        <div class="flex items-start justify-between gap-2">
+          <div class="flex-1">
+            <h4 class="font-semibold text-gray-800 text-base leading-tight">${m.nome}</h4>
+            <span class="pill ${tc} mt-1">${m.categoria}</span>
+          </div>
+          <span class="pill badge-avail bg-emerald-100 text-brand-green border border-emerald-200 shrink-0">
+            <i data-lucide="circle-check" class="w-3 h-3"></i> Disponível
+          </span>
+        </div>
+        <div class="flex items-center justify-between border-t border-blue-50 pt-3">
+          <div>
+            <div class="text-2xl font-display font-bold text-brand-blue">R$ ${parseFloat(m.preco).toFixed(2).replace('.',',')}</div>
+            <div class="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
+              <i data-lucide="store" class="w-3 h-3"></i> ${f.nome} · <span class="font-medium">${f.tipo}</span>
+            </div>
+          </div>
+          <button onclick="reservar('${m.nome.replace(/'/g,"\\'")}','${f.nome}')"
+            class="btn-green bg-brand-green text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5">
+            <i data-lucide="bookmark-check" class="w-3.5 h-3.5"></i> Reservar
+          </button>
+        </div>`;
+      grid.appendChild(card);
+    });
+    lucide.createIcons();
+  }
+
+  function reservar(nome, farmacia) {
+    const p = 'FL-' + Math.floor(1000 + Math.random() * 9000);
+    showToast(`✔ Reserva #${p} confirmada! ${nome}`, 'success');
+  }
+
+  // ── CRUD Inventário ─────────────────────────────────────────────
+  function salvarProduto() {
+    const nome  = document.getElementById('fNome').value.trim();
+    const cat   = document.getElementById('fCategoria').value;
+    const qtd   = parseInt(document.getElementById('fQtd').value, 10);
+    const preco = parseFloat(document.getElementById('fPreco').value);
+    const eid   = document.getElementById('editingId').value;
+    if (!nome || !cat || isNaN(qtd) || isNaN(preco)) { showToast('Preencha todos os campos.', 'error'); return; }
+    const meds = getMeds();
+    if (eid) {
+      const idx = meds.findIndex(m => m.id === eid);
+      if (idx > -1) meds[idx] = { ...meds[idx], nome, categoria: cat, qtd, preco };
+      showToast('Produto atualizado!', 'success');
+    } else {
+      meds.push({ id: uid(), nome, categoria: cat, qtd, preco, farmacia: FARMACIAS[Math.floor(Math.random()*FARMACIAS.length)] });
+      showToast('Estoque Atualizado! Produto cadastrado.', 'success');
+    }
+    saveMeds(meds);
+    limparForm();
+    renderInventory();
+    renderMeds(document.getElementById('searchInput').value.toLowerCase().trim());
+  }
+
+  function editarProduto(id) {
+    const m = getMeds().find(x => x.id === id);
+    if (!m) return;
+    document.getElementById('fNome').value     = m.nome;
+    document.getElementById('fCategoria').value = m.categoria;
+    document.getElementById('fQtd').value       = m.qtd;
+    document.getElementById('fPreco').value     = m.preco;
+    document.getElementById('editingId').value  = m.id;
+    document.getElementById('formTitle').textContent    = 'Editar Produto';
+    document.getElementById('btnSalvarText').textContent = 'Salvar Alterações';
+    document.getElementById('btnCancelarEdit').classList.remove('hidden');
+    document.getElementById('fNome').focus();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function excluirProduto(id) {
+    saveMeds(getMeds().filter(m => m.id !== id));
+    renderInventory();
+    renderMeds(document.getElementById('searchInput').value.toLowerCase().trim());
+    showToast('Produto removido.', 'info');
+  }
+
+  function cancelarEdicao() { limparForm(); showToast('Edição cancelada.', 'info'); }
+
+  function limparForm() {
+    ['fNome','fCategoria','fQtd','fPreco'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('editingId').value = '';
+    document.getElementById('formTitle').textContent     = 'Cadastrar Produto no Estoque';
+    document.getElementById('btnSalvarText').textContent = 'Cadastrar Produto';
+    document.getElementById('btnCancelarEdit').classList.add('hidden');
+  }
+
+  function renderInventory() {
+    const meds = getMeds();
+    const tbody = document.getElementById('inventoryTable');
+    if (document.getElementById('kpiTotal'))   document.getElementById('kpiTotal').textContent = meds.length;
+    if (document.getElementById('tableCount')) document.getElementById('tableCount').textContent = `${meds.length} ${meds.length===1?'item':'itens'}`;
+    if (!meds.length) {
+      tbody.innerHTML = `<tr><td colspan="5" class="text-center py-12 text-gray-300"><i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2"></i><p>Nenhum produto cadastrado ainda.</p></td></tr>`;
+      lucide.createIcons(); return;
+    }
+    const catC = {'Uso Contínuo':'bg-blue-100 text-blue-700','Antibiótico':'bg-amber-100 text-amber-700','Anti-inflamatório':'bg-red-100 text-red-700','Analgésico':'bg-orange-100 text-orange-700','Vitaminas & Suplementos':'bg-green-100 text-green-700','Dermatológico':'bg-pink-100 text-pink-700','Genérico':'bg-gray-100 text-gray-600'};
+    tbody.innerHTML = meds.map(m => {
+      const cc = catC[m.categoria] || 'bg-gray-100 text-gray-600';
+      const qc = m.qtd < 30 ? 'text-red-600 font-bold' : m.qtd < 80 ? 'text-amber-600 font-semibold' : 'text-brand-green font-semibold';
+      const nm = m.nome.replace(/'/g,"\\'");
+      return `<tr class="table-row-hover border-t border-blue-50 transition">
+        <td class="px-5 py-3 font-medium text-gray-800">${m.nome}</td>
+        <td class="px-5 py-3"><span class="pill ${cc}">${m.categoria}</span></td>
+        <td class="px-5 py-3 text-center ${qc}">${m.qtd} un.</td>
+        <td class="px-5 py-3 text-right font-mono text-gray-700">R$ ${parseFloat(m.preco).toFixed(2).replace('.',',')}</td>
+        <td class="px-5 py-3 text-center">
+          <div class="flex items-center justify-center gap-2">
+            <button onclick="editarProduto('${m.id}')" class="p-1.5 rounded-lg bg-blue-50 text-brand-blue hover:bg-blue-100 transition" title="Editar"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button>
+            <button onclick="if(confirm('Excluir ${nm}?'))excluirProduto('${m.id}')" class="p-1.5 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 transition" title="Excluir"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+    lucide.createIcons();
+  }
+
+  // ── Boot ────────────────────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', () => {
+    init();
+    document.getElementById('cepInput').addEventListener('input', function() {
+      let v = this.value.replace(/\D/g,'');
+      if (v.length > 5) v = v.slice(0,5) + '-' + v.slice(5,8);
+      this.value = v;
+    });
+    ['loginCnpj','cadCnpj'].forEach(id => {
+      document.getElementById(id).addEventListener('input', function() { this.value = maskCnpj(this.value); });
+    });
+    document.getElementById('loginSenha').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+    document.getElementById('cadSenha').addEventListener('keydown',  e => { if(e.key==='Enter') doCadastro(); });
+  });
+  </script>
+</body>
+</html>
