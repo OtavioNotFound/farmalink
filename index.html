@@ -84,8 +84,10 @@
 </head>
 <body class="min-h-screen flex flex-col">
 
+  <!-- TOAST CONTAINER -->
   <div id="toastContainer" class="toast-container"></div>
 
+  <!-- HEADER -->
   <header class="hero-bg shadow-lg sticky top-0 z-50">
     <div class="max-w-6xl mx-auto px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
       <div class="flex items-center gap-2.5 cursor-pointer" onclick="showView('patient')">
@@ -110,6 +112,7 @@
 
   <main class="flex-1 max-w-6xl mx-auto w-full px-4 py-8">
 
+    <!-- ── VIEW: PACIENTE ── -->
     <section id="view-patient" class="view-section active">
       <div class="hero-bg rounded-2xl p-8 mb-8 text-center relative overflow-hidden">
         <div class="absolute inset-0 opacity-10" style="background:radial-gradient(circle at 20% 50%,#10b981 0%,transparent 50%),radial-gradient(circle at 80% 20%,#3b82f6 0%,transparent 40%)"></div>
@@ -152,11 +155,14 @@
       </div>
     </section>
 
+    <!-- ── VIEW: EMPRESA ── -->
     <section id="view-company" class="view-section">
 
+      <!-- AUTH PANEL -->
       <div id="authPanel">
         <div class="max-w-md mx-auto mt-6">
 
+          <!-- Topo azul -->
           <div class="hero-bg p-7 text-center relative overflow-hidden" style="border-radius:1rem 1rem 0 0">
             <div class="absolute inset-0 opacity-10" style="background:radial-gradient(circle at 80% 20%,#10b981 0%,transparent 50%)"></div>
             <div class="relative z-10">
@@ -168,11 +174,13 @@
             </div>
           </div>
 
+          <!-- Tabs -->
           <div class="bg-white border-x border-blue-100 flex">
             <button id="tabLogin" onclick="switchAuthTab('login')" class="auth-tab active flex-1 py-3.5 text-sm text-center">Entrar</button>
             <button id="tabCadastro" onclick="switchAuthTab('cadastro')" class="auth-tab flex-1 py-3.5 text-sm text-center">Cadastrar Empresa</button>
           </div>
 
+          <!-- FORM LOGIN -->
           <div id="formLogin" class="bg-white rounded-b-2xl border border-blue-100 border-t-0 p-7 shadow-sm">
             <div class="mb-4">
               <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">CNPJ</label>
@@ -202,6 +210,7 @@
             </p>
           </div>
 
+          <!-- FORM CADASTRO -->
           <div id="formCadastro" class="hidden bg-white rounded-b-2xl border border-blue-100 border-t-0 p-7 shadow-sm">
             <div class="mb-4">
               <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Nome da Farmácia / Empresa</label>
@@ -230,6 +239,7 @@
                 </button>
               </div>
             </div>
+            <!-- Barra de força -->
             <div class="flex gap-1 mb-1">
               <div id="sb1" class="strength-bar flex-1 bg-gray-200"></div>
               <div id="sb2" class="strength-bar flex-1 bg-gray-200"></div>
@@ -249,6 +259,7 @@
         </div>
       </div>
 
+      <!-- DASHBOARD -->
       <div id="dashboardPanel" class="hidden">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-7">
           <div>
@@ -263,6 +274,7 @@
           </button>
         </div>
 
+        <!-- KPIs -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
           <div class="stat-gradient rounded-2xl p-5 text-white shadow">
             <div class="flex items-center gap-2 mb-2 opacity-80">
@@ -290,6 +302,7 @@
           </div>
         </div>
 
+        <!-- Formulário de Produto -->
         <div class="bg-white rounded-2xl shadow-sm border border-blue-100 p-6 mb-6">
           <h3 class="font-semibold text-brand-blue text-lg mb-5 flex items-center gap-2">
             <i data-lucide="plus-circle" class="w-5 h-5 text-brand-green"></i>
@@ -336,6 +349,7 @@
           </div>
         </div>
 
+        <!-- Tabela -->
         <div class="bg-white rounded-2xl shadow-sm border border-blue-100 overflow-hidden">
           <div class="px-6 py-4 border-b border-blue-50 flex items-center justify-between">
             <h3 class="font-semibold text-brand-blue flex items-center gap-2">
@@ -367,6 +381,7 @@
 
     </section>
 
+    <!-- ── VIEW: SOBRE ── -->
     <section id="view-about" class="view-section">
       <div class="max-w-3xl mx-auto">
         <div class="hero-bg rounded-2xl p-8 mb-8 text-center relative overflow-hidden">
@@ -435,6 +450,7 @@
 
   </main>
 
+  <!-- FOOTER -->
   <footer class="mt-12 border-t border-blue-100 bg-white">
     <div class="max-w-6xl mx-auto px-4 py-6">
       <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -459,323 +475,541 @@
   </footer>
 
   <script>
-  // ══════════════════════════════════════════
-  //  SUPABASE CONFIG
-  // ══════════════════════════════════════════
-  const SUPABASE_URL  = 'https://ycmztazymmlmlzatooqt.supabase.co';
-  const SUPABASE_ANON = 'sb_publishable_nI1lIDEUJkusIHacXIrX8g_Ajo-8haS';
-  const SB_H = {
-    'Content-Type': 'application/json',
-    'apikey': SUPABASE_ANON,
-    'Authorization': 'Bearer ' + SUPABASE_ANON
+// ══════════════════════════════════════════
+//  SUPABASE CONFIG
+// ══════════════════════════════════════════
+const SUPABASE_URL  = 'https://ycmztazymmlmlzatooqt.supabase.co';
+const SUPABASE_ANON = 'SUA_NOVA_CHAVE_AQUI'; // ← substitua pela nova chave
+
+function sbHeaders(extra = {}) {
+  return {
+    'Content-Type':  'application/json',
+    'apikey':        SUPABASE_ANON,
+    'Authorization': 'Bearer ' + SUPABASE_ANON,
+    ...extra
+  };
+}
+
+// ── REST helpers ────────────────────────────────────────────────
+async function sbGet(table, qs = '') {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${qs}`, {
+    headers: sbHeaders()
+  });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+async function sbPost(table, body) {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+    method:  'POST',
+    headers: sbHeaders({ 'Prefer': 'return=representation' }),
+    body:    JSON.stringify(body)
+  });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+async function sbPatch(table, id, body) {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
+    method:  'PATCH',
+    headers: sbHeaders({ 'Prefer': 'return=representation' }),
+    body:    JSON.stringify(body)
+  });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+async function sbDelete(table, id) {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
+    method:  'DELETE',
+    headers: sbHeaders()
+  });
+  if (!r.ok) throw new Error(await r.text());
+}
+
+// ── Estado global ────────────────────────────────────────────────
+let SESSAO = null; // { id, nome, cnpj }
+
+const FARMACIAS_LABELS = [
+  { nome: 'Drogaria São Paulo',   tipo: 'Rede' },
+  { nome: 'Farmácia Popular',     tipo: 'Rede' },
+  { nome: 'Farmácia Bem-Estar',   tipo: 'Independente' },
+  { nome: 'Drogaria Saúde Total', tipo: 'Independente' },
+  { nome: 'FarmaVida',            tipo: 'Independente' },
+];
+
+// ── Init ─────────────────────────────────────────────────────────
+function init() {
+  const saved = sessionStorage.getItem('fl_sessao');
+  if (saved) {
+    SESSAO = JSON.parse(saved);
+    abrirDashboard();
+  }
+  renderMeds();      // carrega do Supabase (SELECT público)
+  lucide.createIcons();
+}
+
+// ══════════════════════════════════════════
+//  getMeds() — lê do Supabase (público)
+// ══════════════════════════════════════════
+async function getMeds(query = '') {
+  let qs = 'select=*&order=criado_em.desc';
+  if (query) qs += `&nome=ilike.*${encodeURIComponent(query)}*`;
+  return sbGet('medicamentos', qs);
+}
+
+// ══════════════════════════════════════════
+//  salvarProduto() — INSERT ou UPDATE
+// ══════════════════════════════════════════
+async function salvarProduto() {
+  // Guarda de segurança: só executa se houver sessão
+  if (!SESSAO) { showToast('Faça login para gerenciar produtos.', 'error'); return; }
+
+  const nome  = document.getElementById('fNome').value.trim();
+  const cat   = document.getElementById('fCategoria').value;
+  const qtd   = parseInt(document.getElementById('fQtd').value, 10);
+  const preco = parseFloat(document.getElementById('fPreco').value);
+  const eid   = document.getElementById('editingId').value;
+
+  if (!nome || !cat || isNaN(qtd) || isNaN(preco)) {
+    showToast('Preencha todos os campos corretamente.', 'error');
+    return;
+  }
+
+  const payload = {
+    nome,
+    categoria:  cat,
+    qtd,
+    preco,
+    empresa_id: SESSAO.id   // ← vincula automaticamente à empresa logada
   };
 
-  // ── localStorage meds (Simulando Banco de Dados) ───────────────
-  const STORAGE_KEY = 'farmalink_meds';
-  const FARMACIAS = [
-    { nome: 'Drogaria São Paulo',  tipo: 'Rede' },
-    { nome: 'Farmácia Popular',    tipo: 'Rede' },
-    { nome: 'Farmácia Bem-Estar',  tipo: 'Independente' },
-    { nome: 'Drogaria Saúde Total', tipo: 'Independente' },
-    { nome: 'FarmaVida',            tipo: 'Independente' },
-  ];
-  function getMeds() { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
-  function saveMeds(d) { localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); }
-  function uid() { return 'FL-' + Math.random().toString(36).substr(2,9).toUpperCase(); }
-
-  // ── Sessão ──────────────────────────────────────────────────────
-  let SESSAO = null; // { id, nome, cnpj }
-
-  // ── Init ────────────────────────────────────────────────────────
-  function init() {
-    if (!localStorage.getItem(STORAGE_KEY)) {
-      saveMeds([
-        { id: uid(), nome: 'Losartana Potássica 50mg', categoria: 'Uso Contínuo', qtd: 240, preco: 18.90, farmacia: FARMACIAS[0] },
-        { id: uid(), nome: 'Atorvastatina 20mg',       categoria: 'Uso Contínuo', qtd: 180, preco: 24.50, farmacia: FARMACIAS[2] },
-        { id: uid(), nome: 'Amoxicilina 500mg',        categoria: 'Antibiótico',  qtd: 96,  preco: 32.00, farmacia: FARMACIAS[1] },
-      ]);
-    }
-    renderMeds();
-    
-    // Restaurar sessão
-    const saved = sessionStorage.getItem('fl_sessao');
-    if (saved) { 
-      SESSAO = JSON.parse(saved); 
-      abrirDashboard(); 
-    }
-    lucide.createIcons();
-  }
-
-  // ── SPA ─────────────────────────────────────────────────────────
-  function showView(id) {
-    document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
-    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById('view-' + id).classList.add('active');
-    document.getElementById('nav-' + id).classList.add('active');
-    lucide.createIcons();
-  }
-
-  // ── Toast ───────────────────────────────────────────────────────
-  function showToast(msg, type = 'success') {
-    const container = document.getElementById('toastContainer');
-    const toast = document.createElement('div');
-    const bgColor = type === 'success' ? 'bg-brand-green' : type === 'error' ? 'bg-red-500' : 'bg-brand-blue';
-    const icon = type === 'success' ? 'check-circle' : type === 'error' ? 'alert-circle' : 'info';
-    
-    toast.className = `toast flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-white text-sm font-medium ${bgColor}`;
-    toast.innerHTML = `<i data-lucide="${icon}" class="w-5 h-5"></i><span>${msg}</span>`;
-    
-    container.appendChild(toast);
-    lucide.createIcons();
-    
-    setTimeout(() => {
-      toast.classList.add('removing');
-      setTimeout(() => toast.remove(), 400);
-    }, 3000);
-  }
-
-  // ── Lógica Visão Paciente ───────────────────────────────────────
-  function buscarLojas() {
-    const cep = document.getElementById('cepInput').value;
-    if (cep.length < 8) return showToast('Digite um CEP válido', 'error');
-    
-    const btn = event.currentTarget;
-    const originalText = btn.innerHTML;
-    btn.innerHTML = '<span class="spinner"></span> Buscando...';
-    
-    setTimeout(() => {
-      btn.innerHTML = originalText;
-      document.getElementById('lojasBadge').classList.remove('hidden');
-      document.getElementById('lojasText').innerText = `3 farmácias encontradas na região de ${cep}`;
-      showToast('Lojas atualizadas para sua região!', 'success');
-    }, 800);
-  }
-
-  function filterMeds() {
-    const term = document.getElementById('searchInput').value.toLowerCase();
-    const meds = getMeds();
-    const filtered = meds.filter(m => m.nome.toLowerCase().includes(term) || m.categoria.toLowerCase().includes(term));
-    renderMeds(filtered);
-  }
-
-  function renderMeds(medsToRender = null) {
-    const meds = medsToRender || getMeds();
-    const grid = document.getElementById('medsGrid');
-    const empty = document.getElementById('emptyState');
-    
-    grid.innerHTML = '';
-    
-    if (meds.length === 0) {
-      grid.classList.add('hidden');
-      empty.classList.remove('hidden');
-      return;
-    }
-    
-    grid.classList.remove('hidden');
-    empty.classList.add('hidden');
-
-    meds.forEach(m => {
-      grid.innerHTML += `
-        <div class="bg-white rounded-2xl border border-blue-100 p-5 card-hover flex flex-col h-full shadow-sm">
-          <div class="flex justify-between items-start mb-3">
-            <span class="pill bg-blue-50 text-brand-blue border border-blue-100">${m.categoria}</span>
-            <span class="text-xs font-semibold text-gray-400"><i data-lucide="store" class="w-3 h-3 inline"></i> ${m.farmacia ? m.farmacia.nome : 'Farmácia Local'}</span>
-          </div>
-          <h3 class="font-display text-lg text-gray-800 mb-1">${m.nome}</h3>
-          <div class="mt-auto pt-4 flex items-end justify-between border-t border-gray-100">
-            <div>
-              <p class="text-xs text-gray-400 mb-0.5">Preço</p>
-              <p class="font-bold text-brand-blue text-lg">R$ ${parseFloat(m.preco).toFixed(2).replace('.', ',')}</p>
-            </div>
-            <button onclick="reservarMedicamento()" class="${m.qtd > 0 ? 'bg-brand-green hover:bg-green-600' : 'bg-gray-300 cursor-not-allowed'} text-white px-4 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-1">
-              <i data-lucide="${m.qtd > 0 ? 'shopping-bag' : 'x-circle'}" class="w-4 h-4"></i> ${m.qtd > 0 ? 'Reservar' : 'Esgotado'}
-            </button>
-          </div>
-        </div>
-      `;
-    });
-    lucide.createIcons();
-  }
-
-  function reservarMedicamento() {
-    showToast('Medicamento reservado! Retire na loja em até 2 horas.', 'success');
-  }
-
-  // ── Lógica Visão Empresa (Auth) ─────────────────────────────────
-  function switchAuthTab(tab) {
-    document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
-    document.getElementById('tabCadastro').classList.toggle('active', tab === 'cadastro');
-    document.getElementById('formLogin').classList.toggle('hidden', tab !== 'login');
-    document.getElementById('formCadastro').classList.toggle('hidden', tab !== 'cadastro');
-  }
-
-  function togglePass(id, btn) {
-    const input = document.getElementById(id);
-    const icon = btn.querySelector('i');
-    if (input.type === 'password') {
-      input.type = 'text';
-      icon.setAttribute('data-lucide', 'eye-off');
+  try {
+    if (eid) {
+      // UPDATE — envia sem empresa_id para não sobrescrever a FK
+      const { empresa_id, ...updatePayload } = payload;
+      await sbPatch('medicamentos', eid, updatePayload);
+      showToast('Produto atualizado com sucesso!', 'success');
     } else {
-      input.type = 'password';
-      icon.setAttribute('data-lucide', 'eye');
+      // INSERT
+      await sbPost('medicamentos', payload);
+      showToast('Estoque Atualizado! Produto cadastrado.', 'success');
     }
-    lucide.createIcons();
+    limparForm();
+    await renderInventory();
+    await renderMeds();
+  } catch (err) {
+    console.error(err);
+    showToast('Erro ao salvar produto. Verifique o console.', 'error');
   }
+}
 
-  function updateStrength(val) {
-    const len = val.length;
-    document.getElementById('sb1').className = `strength-bar flex-1 ${len > 0 ? 'bg-red-400' : 'bg-gray-200'}`;
-    document.getElementById('sb2').className = `strength-bar flex-1 ${len >= 4 ? 'bg-yellow-400' : 'bg-gray-200'}`;
-    document.getElementById('sb3').className = `strength-bar flex-1 ${len >= 6 ? 'bg-brand-green' : 'bg-gray-200'}`;
+// ══════════════════════════════════════════
+//  excluirProduto() — DELETE no Supabase
+// ══════════════════════════════════════════
+async function excluirProduto(id) {
+  if (!SESSAO) return;
+  try {
+    await sbDelete('medicamentos', id);
+    showToast('Produto removido do estoque.', 'info');
+    await renderInventory();
+    await renderMeds();
+  } catch (err) {
+    console.error(err);
+    showToast('Erro ao excluir produto.', 'error');
   }
+}
 
-  function doLogin() {
-    const cnpj = document.getElementById('loginCnpj').value;
-    if (!cnpj) return showToast('Por favor, informe o CNPJ', 'error');
-    
-    SESSAO = { id: uid(), nome: 'Farmácia Parceira', cnpj };
-    sessionStorage.setItem('fl_sessao', JSON.stringify(SESSAO));
-    showToast('Login realizado com sucesso!');
-    abrirDashboard();
-  }
+// ══════════════════════════════════════════
+//  renderInventory() — tabela do dashboard
+//  Filtra pelos medicamentos da empresa logada
+// ══════════════════════════════════════════
+async function renderInventory() {
+  if (!SESSAO) return;
 
-  function doCadastro() {
-    const nome = document.getElementById('cadNome').value;
-    const cnpj = document.getElementById('cadCnpj').value;
-    if (!nome || !cnpj) return showToast('Preencha todos os campos obrigatórios', 'error');
-    
-    SESSAO = { id: uid(), nome, cnpj };
-    sessionStorage.setItem('fl_sessao', JSON.stringify(SESSAO));
-    showToast('Conta criada com sucesso!');
-    abrirDashboard();
-  }
+  const tbody = document.getElementById('inventoryTable');
+  // Skeleton de loading
+  tbody.innerHTML = `<tr><td colspan="5" class="text-center py-10 text-gray-300">
+    <div class="flex items-center justify-center gap-2">
+      <span class="spinner" style="border-color:rgba(30,58,138,.2);border-top-color:#1e3a8a"></span>
+      <span class="text-sm">Carregando estoque...</span>
+    </div>
+  </td></tr>`;
 
-  function abrirDashboard() {
-    document.getElementById('authPanel').classList.add('hidden');
-    document.getElementById('dashboardPanel').classList.remove('hidden');
-    document.getElementById('dashNomeEmpresa').innerText = SESSAO.nome;
-    document.getElementById('dashCnpj').innerText = SESSAO.cnpj;
-    renderInventory();
-  }
+  try {
+    // Busca APENAS os medicamentos desta empresa
+    const meds = await sbGet(
+      'medicamentos',
+      `empresa_id=eq.${SESSAO.id}&select=*&order=criado_em.desc`
+    );
 
-  function doLogout() {
-    SESSAO = null;
-    sessionStorage.removeItem('fl_sessao');
-    document.getElementById('authPanel').classList.remove('hidden');
-    document.getElementById('dashboardPanel').classList.add('hidden');
-    showToast('Sessão encerrada de forma segura', 'info');
-  }
+    // Atualiza KPIs
+    if (document.getElementById('kpiTotal'))
+      document.getElementById('kpiTotal').textContent = meds.length;
+    if (document.getElementById('tableCount'))
+      document.getElementById('tableCount').textContent =
+        `${meds.length} ${meds.length === 1 ? 'item' : 'itens'}`;
 
-  // ── Lógica do Dashboard (Inventário) ────────────────────────────
-  function renderInventory() {
-    const meds = getMeds();
-    const tbody = document.getElementById('inventoryTable');
-    document.getElementById('tableCount').innerText = `${meds.length} itens`;
-    document.getElementById('kpiTotal').innerText = meds.length;
-    
-    if (meds.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="5" class="text-center py-12 text-gray-400"><i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2"></i><p>Nenhum produto cadastrado.</p></td></tr>`;
+    if (!meds.length) {
+      tbody.innerHTML = `<tr><td colspan="5" class="text-center py-12 text-gray-300">
+        <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2"></i>
+        <p>Nenhum produto cadastrado ainda.</p>
+      </td></tr>`;
       lucide.createIcons();
       return;
     }
 
-    tbody.innerHTML = meds.map(m => `
-      <tr class="border-b border-gray-50 table-row-hover transition">
-        <td class="px-5 py-3 font-medium text-gray-800">${m.nome}</td>
-        <td class="px-5 py-3"><span class="pill bg-gray-100 text-gray-600">${m.categoria}</span></td>
-        <td class="px-5 py-3 text-center">
-          <span class="font-mono text-sm ${m.qtd < 10 ? 'text-red-500 font-bold' : 'text-gray-600'}">${m.qtd}</span>
-        </td>
-        <td class="px-5 py-3 text-right font-medium text-brand-blue">R$ ${parseFloat(m.preco).toFixed(2).replace('.',',')}</td>
-        <td class="px-5 py-3 text-center">
-          <button onclick="editarProduto('${m.id}')" class="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
-          <button onclick="removerProduto('${m.id}')" class="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition ml-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-        </td>
-      </tr>
-    `).join('');
+    const catC = {
+      'Uso Contínuo':          'bg-blue-100 text-blue-700',
+      'Antibiótico':            'bg-amber-100 text-amber-700',
+      'Anti-inflamatório':      'bg-red-100 text-red-700',
+      'Analgésico':             'bg-orange-100 text-orange-700',
+      'Vitaminas & Suplementos':'bg-green-100 text-green-700',
+      'Dermatológico':          'bg-pink-100 text-pink-700',
+      'Genérico':               'bg-gray-100 text-gray-600',
+    };
+
+    tbody.innerHTML = meds.map(m => {
+      const cc  = catC[m.categoria] || 'bg-gray-100 text-gray-600';
+      const qc  = m.qtd < 30
+        ? 'text-red-600 font-bold'
+        : m.qtd < 80
+          ? 'text-amber-600 font-semibold'
+          : 'text-brand-green font-semibold';
+      const nm  = m.nome.replace(/'/g, "\\'");
+      return `
+        <tr class="table-row-hover border-t border-blue-50 transition">
+          <td class="px-5 py-3 font-medium text-gray-800">${m.nome}</td>
+          <td class="px-5 py-3"><span class="pill ${cc}">${m.categoria}</span></td>
+          <td class="px-5 py-3 text-center ${qc}">${m.qtd} un.</td>
+          <td class="px-5 py-3 text-right font-mono text-gray-700">
+            R$ ${parseFloat(m.preco).toFixed(2).replace('.', ',')}
+          </td>
+          <td class="px-5 py-3 text-center">
+            <div class="flex items-center justify-center gap-2">
+              <button
+                onclick="editarProduto('${m.id}','${nm}','${m.categoria}',${m.qtd},${m.preco})"
+                class="p-1.5 rounded-lg bg-blue-50 text-brand-blue hover:bg-blue-100 transition"
+                title="Editar">
+                <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+              </button>
+              <button
+                onclick="if(confirm('Excluir ${nm}?')) excluirProduto('${m.id}')"
+                class="p-1.5 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 transition"
+                title="Excluir">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+          </td>
+        </tr>`;
+    }).join('');
+
     lucide.createIcons();
+
+  } catch (err) {
+    console.error(err);
+    tbody.innerHTML = `<tr><td colspan="5" class="text-center py-10 text-red-400 text-sm">
+      Erro ao carregar estoque. Verifique a conexão.
+    </td></tr>`;
   }
+}
 
-  function salvarProduto() {
-    const id = document.getElementById('editingId').value;
-    const nome = document.getElementById('fNome').value;
-    const categoria = document.getElementById('fCategoria').value;
-    const qtd = document.getElementById('fQtd').value;
-    const preco = document.getElementById('fPreco').value;
+// ── renderMeds() — cards do painel do paciente ───────────────────
+async function renderMeds(query = '') {
+  const grid  = document.getElementById('medsGrid');
+  const empty = document.getElementById('emptyState');
 
-    if (!nome || !categoria || !qtd || !preco) {
-      return showToast('Preencha todos os campos do produto', 'error');
-    }
+  grid.innerHTML = `<div class="col-span-full flex items-center justify-center gap-2 py-16 text-gray-300">
+    <span class="spinner" style="border-color:rgba(30,58,138,.15);border-top-color:#93c5fd"></span>
+    <span class="text-sm">Buscando medicamentos...</span>
+  </div>`;
 
-    let meds = getMeds();
+  try {
+    const meds = await getMeds(query);
 
-    if (id) {
-      const idx = meds.findIndex(m => m.id === id);
-      if (idx > -1) {
-        meds[idx] = { ...meds[idx], nome, categoria, qtd: parseInt(qtd), preco: parseFloat(preco) };
-        showToast('Produto atualizado com sucesso!', 'success');
-      }
-    } else {
-      meds.push({
-        id: uid(),
-        nome,
-        categoria,
-        qtd: parseInt(qtd),
-        preco: parseFloat(preco),
-        farmacia: SESSAO ? { nome: SESSAO.nome, tipo: 'Cadastrada' } : FARMACIAS[2]
-      });
-      showToast('Produto adicionado ao estoque!', 'success');
-    }
+    grid.innerHTML = '';
+    if (!meds.length) { empty.classList.remove('hidden'); return; }
+    empty.classList.add('hidden');
 
-    saveMeds(meds);
-    cancelarEdicao();
-    renderInventory();
-    renderMeds(); // Atualiza a vitrine de pacientes
+    meds.forEach((m, i) => {
+      const f  = FARMACIAS_LABELS[i % FARMACIAS_LABELS.length];
+      const tc = f.tipo === 'Rede'
+        ? 'bg-blue-100 text-brand-blue'
+        : 'bg-purple-100 text-purple-700';
+
+      const card = document.createElement('div');
+      card.className = 'bg-white rounded-2xl border border-blue-100 p-5 card-hover shadow-sm flex flex-col gap-3';
+      card.innerHTML = `
+        <div class="flex items-start justify-between gap-2">
+          <div class="flex-1">
+            <h4 class="font-semibold text-gray-800 text-base leading-tight">${m.nome}</h4>
+            <span class="pill ${tc} mt-1">${m.categoria}</span>
+          </div>
+          <span class="pill badge-avail bg-emerald-100 text-brand-green border border-emerald-200 shrink-0">
+            <i data-lucide="circle-check" class="w-3 h-3"></i> Disponível
+          </span>
+        </div>
+        <div class="flex items-center justify-between border-t border-blue-50 pt-3">
+          <div>
+            <div class="text-2xl font-display font-bold text-brand-blue">
+              R$ ${parseFloat(m.preco).toFixed(2).replace('.', ',')}
+            </div>
+            <div class="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
+              <i data-lucide="store" class="w-3 h-3"></i>
+              ${f.nome} · <span class="font-medium">${f.tipo}</span>
+            </div>
+          </div>
+          <button
+            onclick="reservar('${m.nome.replace(/'/g, "\\'")}','${f.nome}')"
+            class="btn-green bg-brand-green text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5">
+            <i data-lucide="bookmark-check" class="w-3.5 h-3.5"></i> Reservar
+          </button>
+        </div>`;
+      grid.appendChild(card);
+    });
+
+    lucide.createIcons();
+
+  } catch (err) {
+    console.error(err);
+    grid.innerHTML = `<div class="col-span-full text-center py-16 text-red-400 text-sm">
+      Erro ao carregar medicamentos. Verifique a conexão.
+    </div>`;
   }
+}
 
-  function editarProduto(id) {
-    const med = getMeds().find(m => m.id === id);
-    if (!med) return;
-    
-    document.getElementById('editingId').value = med.id;
-    document.getElementById('fNome').value = med.nome;
-    document.getElementById('fCategoria').value = med.categoria;
-    document.getElementById('fQtd').value = med.qtd;
-    document.getElementById('fPreco').value = med.preco;
-    
-    document.getElementById('formTitle').innerText = 'Editar Produto';
-    document.getElementById('btnSalvarText').innerText = 'Salvar Alterações';
-    document.getElementById('btnCancelarEdit').classList.remove('hidden');
-    
-    // Rola a página para o topo do form
-    window.scrollTo({ top: document.getElementById('formTitle').offsetTop - 100, behavior: 'smooth' });
+// ── filterMeds() — chamado pelo input de busca ───────────────────
+function filterMeds() {
+  const q = document.getElementById('searchInput').value.trim();
+  renderMeds(q);
+}
+
+// ── editarProduto() — preenche o formulário ──────────────────────
+function editarProduto(id, nome, categoria, qtd, preco) {
+  document.getElementById('fNome').value      = nome;
+  document.getElementById('fCategoria').value = categoria;
+  document.getElementById('fQtd').value       = qtd;
+  document.getElementById('fPreco').value     = preco;
+  document.getElementById('editingId').value  = id;
+  document.getElementById('formTitle').textContent     = 'Editar Produto';
+  document.getElementById('btnSalvarText').textContent = 'Salvar Alterações';
+  document.getElementById('btnCancelarEdit').classList.remove('hidden');
+  document.getElementById('fNome').focus();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function cancelarEdicao() { limparForm(); showToast('Edição cancelada.', 'info'); }
+
+function limparForm() {
+  ['fNome','fCategoria','fQtd','fPreco'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('editingId').value = '';
+  document.getElementById('formTitle').textContent     = 'Cadastrar Produto no Estoque';
+  document.getElementById('btnSalvarText').textContent = 'Cadastrar Produto';
+  document.getElementById('btnCancelarEdit').classList.add('hidden');
+}
+
+// ── SPA ──────────────────────────────────────────────────────────
+function showView(id) {
+  document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('view-' + id).classList.add('active');
+  document.getElementById('nav-' + id).classList.add('active');
+  lucide.createIcons();
+}
+
+// ── Toast ─────────────────────────────────────────────────────────
+function showToast(msg, type = 'success') {
+  const c = document.getElementById('toastContainer');
+  const colors = {
+    success: 'bg-brand-green text-white',
+    error:   'bg-red-500 text-white',
+    info:    'bg-brand-blue text-white'
+  };
+  const icons = { success: 'check-circle', error: 'x-circle', info: 'info' };
+  const el = document.createElement('div');
+  el.className = `toast ${colors[type]} rounded-xl px-5 py-3 shadow-xl flex items-center gap-3 text-sm font-medium max-w-xs`;
+  el.innerHTML = `<i data-lucide="${icons[type]}" class="w-4 h-4 shrink-0"></i><span>${msg}</span>`;
+  c.appendChild(el);
+  lucide.createIcons();
+  setTimeout(() => { el.classList.add('removing'); setTimeout(() => el.remove(), 400); }, 3200);
+}
+
+// ── Auth ──────────────────────────────────────────────────────────
+function switchAuthTab(tab) {
+  const isLogin = tab === 'login';
+  document.getElementById('tabLogin').classList.toggle('active', isLogin);
+  document.getElementById('tabCadastro').classList.toggle('active', !isLogin);
+  document.getElementById('formLogin').classList.toggle('hidden', !isLogin);
+  document.getElementById('formCadastro').classList.toggle('hidden', isLogin);
+  lucide.createIcons();
+}
+
+function togglePass(inputId, btn) {
+  const inp  = document.getElementById(inputId);
+  const show = inp.type === 'password';
+  inp.type   = show ? 'text' : 'password';
+  btn.innerHTML = show
+    ? '<i data-lucide="eye-off" class="w-4 h-4"></i>'
+    : '<i data-lucide="eye" class="w-4 h-4"></i>';
+  lucide.createIcons();
+}
+
+function updateStrength(val) {
+  let s = 0;
+  if (val.length >= 6) s++;
+  if (/[A-Z]/.test(val) || /\d/.test(val)) s++;
+  if (val.length >= 10 && /[^A-Za-z0-9]/.test(val)) s++;
+  const cols = ['bg-red-400', 'bg-amber-400', 'bg-brand-green'];
+  const labs = ['Senha fraca', 'Senha razoável', 'Senha forte 💪'];
+  for (let i = 1; i <= 3; i++) {
+    document.getElementById('sb' + i).className =
+      'strength-bar flex-1 ' + (i <= s ? cols[s - 1] : 'bg-gray-200');
   }
+  document.getElementById('strengthLabel').textContent =
+    s > 0 ? labs[s - 1] : 'Digite uma senha segura';
+}
 
-  function removerProduto(id) {
-    if(!confirm('Tem certeza que deseja excluir este produto do estoque?')) return;
-    
-    let meds = getMeds();
-    meds = meds.filter(m => m.id !== id);
-    saveMeds(meds);
-    renderInventory();
-    renderMeds();
-    showToast('Produto removido do sistema', 'info');
+function maskCnpj(v) {
+  v = v.replace(/\D/g, '').slice(0, 14);
+  if (v.length > 12) v = v.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{0,2})$/, '$1.$2.$3/$4-$5');
+  else if (v.length > 8) v = v.replace(/^(\d{2})(\d{3})(\d{3})(\d{0,4})$/, '$1.$2.$3/$4');
+  else if (v.length > 5) v = v.replace(/^(\d{2})(\d{3})(\d{0,3})$/, '$1.$2.$3');
+  else if (v.length > 2) v = v.replace(/^(\d{2})(\d{0,3})$/, '$1.$2');
+  return v;
+}
+
+function setLoading(btnId, txtId, loading, label) {
+  const btn = document.getElementById(btnId);
+  const txt = document.getElementById(txtId);
+  btn.disabled      = loading;
+  btn.style.opacity = loading ? '.7' : '1';
+  txt.textContent   = label;
+  const old = btn.querySelector('.spinner');
+  if (old) old.remove();
+  if (loading) {
+    const sp = document.createElement('span');
+    sp.className = 'spinner';
+    btn.prepend(sp);
   }
+}
 
-  function cancelarEdicao() {
-    document.getElementById('editingId').value = '';
-    document.getElementById('fNome').value = '';
-    document.getElementById('fCategoria').value = '';
-    document.getElementById('fQtd').value = '';
-    document.getElementById('fPreco').value = '';
-    
-    document.getElementById('formTitle').innerText = 'Cadastrar Produto no Estoque';
-    document.getElementById('btnSalvarText').innerText = 'Cadastrar Produto';
-    document.getElementById('btnCancelarEdit').classList.add('hidden');
+// ── Cadastro no Supabase ─────────────────────────────────────────
+async function doCadastro() {
+  const nome  = document.getElementById('cadNome').value.trim();
+  const cnpj  = document.getElementById('cadCnpj').value.trim();
+  const senha = document.getElementById('cadSenha').value;
+  if (!nome || !cnpj || !senha) { showToast('Preencha todos os campos.', 'error'); return; }
+  if (senha.length < 6)          { showToast('Senha mínima: 6 caracteres.', 'error'); return; }
+
+  setLoading('btnCadastrar', 'btnCadText', true, 'Criando conta...');
+  try {
+    const existe = await sbGet('empresas', `cnpj=eq.${encodeURIComponent(cnpj)}&select=id`);
+    if (existe.length > 0) { showToast('CNPJ já cadastrado. Faça login.', 'error'); return; }
+
+    await sbPost('empresas', { nome, cnpj, senha });
+    showToast(`Empresa cadastrada! Bem-vinda, ${nome}!`, 'success');
+    document.getElementById('cadNome').value  = '';
+    document.getElementById('cadCnpj').value  = '';
+    document.getElementById('cadSenha').value = '';
+    updateStrength('');
+    switchAuthTab('login');
+    document.getElementById('loginCnpj').value = cnpj;
+  } catch (err) {
+    console.error(err);
+    showToast('Erro ao cadastrar. Verifique o console.', 'error');
+  } finally {
+    setLoading('btnCadastrar', 'btnCadText', false, 'Criar Conta');
   }
+}
 
-  // Inicializa o app ao carregar a página
-  window.onload = init;
-  </script>
+// ── Login verificado no Supabase ─────────────────────────────────
+async function doLogin() {
+  const cnpj  = document.getElementById('loginCnpj').value.trim();
+  const senha = document.getElementById('loginSenha').value;
+  if (!cnpj || !senha) { showToast('Preencha CNPJ e Senha.', 'error'); return; }
+
+  setLoading('btnLogin', 'btnLoginText', true, 'Verificando...');
+  try {
+    const rows = await sbGet(
+      'empresas',
+      `cnpj=eq.${encodeURIComponent(cnpj)}&senha=eq.${encodeURIComponent(senha)}&select=id,nome,cnpj`
+    );
+    if (!rows.length) { showToast('CNPJ ou senha incorretos.', 'error'); return; }
+
+    SESSAO = rows[0];
+    sessionStorage.setItem('fl_sessao', JSON.stringify(SESSAO));
+    abrirDashboard();
+    showToast(`Bem-vinda, ${SESSAO.nome}! 👋`, 'success');
+  } catch (err) {
+    console.error(err);
+    showToast('Erro de conexão. Tente novamente.', 'error');
+  } finally {
+    setLoading('btnLogin', 'btnLoginText', false, 'Entrar no Painel');
+  }
+}
+
+function doLogout() {
+  SESSAO = null;
+  sessionStorage.removeItem('fl_sessao');
+  document.getElementById('authPanel').classList.remove('hidden');
+  document.getElementById('dashboardPanel').classList.add('hidden');
+  document.getElementById('loginCnpj').value = '';
+  document.getElementById('loginSenha').value = '';
+  showToast('Sessão encerrada.', 'info');
+  lucide.createIcons();
+}
+
+function abrirDashboard() {
+  document.getElementById('authPanel').classList.add('hidden');
+  document.getElementById('dashboardPanel').classList.remove('hidden');
+  document.getElementById('dashNomeEmpresa').textContent = SESSAO.nome;
+  document.getElementById('dashCnpj').textContent        = SESSAO.cnpj;
+  renderInventory();
+  lucide.createIcons();
+}
+
+// ── Paciente: busca por CEP ──────────────────────────────────────
+function buscarLojas() {
+  const cep = document.getElementById('cepInput').value.trim();
+  if (!cep) { showToast('Informe um CEP.', 'error'); return; }
+  const qtd = Math.floor(Math.random() * 8) + 3;
+  document.getElementById('lojasBadge').classList.remove('hidden');
+  document.getElementById('lojasText').textContent =
+    `${qtd} farmácias encontradas num raio de 5km para o CEP ${cep}`;
+  showToast(`${qtd} farmácias disponíveis próximas!`, 'info');
+  lucide.createIcons();
+}
+
+function reservar(nome, farmacia) {
+  const p = 'FL-' + Math.floor(1000 + Math.random() * 9000);
+  showToast(`✔ Reserva #${p} confirmada! ${nome}`, 'success');
+}
+
+// ── Boot ─────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  init();
+
+  document.getElementById('cepInput').addEventListener('input', function () {
+    let v = this.value.replace(/\D/g, '');
+    if (v.length > 5) v = v.slice(0, 5) + '-' + v.slice(5, 8);
+    this.value = v;
+  });
+
+  ['loginCnpj', 'cadCnpj'].forEach(id => {
+    document.getElementById(id).addEventListener('input', function () {
+      this.value = maskCnpj(this.value);
+    });
+  });
+
+  document.getElementById('loginSenha').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+  });
+  document.getElementById('cadSenha').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doCadastro();
+  });
+});
+</script>
 </body>
 </html>
